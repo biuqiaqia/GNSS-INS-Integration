@@ -1,0 +1,15 @@
+*.csv
+*.txt
+*.ubx
+*.obs
+*.rnx
+*.bag
+*.zip
+*.rar
+*.7z
+*.asv
+input/
+output/
+data/
+results/
+
