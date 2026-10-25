@@ -28,6 +28,7 @@ The project investigates how inertial propagation and GNSS corrections can be co
 3. compare position/velocity-level fusion with observation-level fusion;
 4. estimate accelerometer and gyroscope biases through closed-loop filtering; and
 5. evaluate integrated trajectories against CPT reference position, velocity, and attitude data.
+6. (GNSS signal classifier/GNSS error map could be integrated)
 
 The implementation uses reference information for initialization and some diagnostic calculations. It should therefore be understood as an experimental comparison framework, not an autonomous initialization system.
 
