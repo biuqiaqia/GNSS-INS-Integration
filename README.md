@@ -1,16 +1,275 @@
 # GNSS/INS Integration
 
-MATLAB research implementation of loosely coupled GNSS/INS integration.
+MATLAB research code for loosely coupled and tightly coupled GNSS/inertial navigation. Both workflows propagate position, velocity, and attitude in Earth-centred, Earth-fixed (ECEF) coordinates using IMU measurements, then apply closed-loop Kalman-filter corrections when GNSS observations become available. The main experiment compares standalone GNSS, loosely coupled integration (LCKF), and tightly coupled integration (TCKF) against a reference trajectory.
 
-The processing chain combines IMU mechanization in ECEF, GNSS weighted least-squares position and velocity solutions, and a Kalman filter update. The main experimental entry point is `LCKF_main_lite.m`.
+> This repository preserves an experimental implementation rather than a self-contained navigation package. A prepared example, `open3s.mat`, is included. Additional GNSS coordinate utilities and preprocessing dependencies are required, and several implementation inconsistencies must be resolved before treating a run as a validated benchmark.
 
-## Main components
+## Table of Contents
 
-- `Nav_equations_ECEFdelete1.m`: inertial navigation propagation.
-- `WLS_positioning.m` and `WLS_velocity.m`: GNSS measurement solutions.
-- `LC_KF_Epoch.m`: loosely coupled Kalman-filter update.
-- `Initialize_LC_P_matrix.m`: state-covariance initialization.
-- `LCKF_INS_GNSS_GH.m`: alternate integration workflow.
+1. [Research Objectives](#1-research-objectives)
+2. [Integration Methods and State Definitions](#2-integration-methods-and-state-definitions)
+3. [Input Data and Coordinate Conventions](#3-input-data-and-coordinate-conventions)
+4. [Experiment and Data Preparation](#4-experiment-and-data-preparation)
+5. [Integration and Kalman Filter Files](#5-integration-and-kalman-filter-files)
+6. [GNSS Position, Velocity, and Doppler Files](#6-gnss-position-velocity-and-doppler-files)
+7. [Inertial Navigation and Coordinate Utilities](#7-inertial-navigation-and-coordinate-utilities)
+8. [Outputs and Evaluation](#8-outputs-and-evaluation)
+9. [Recommended Reading and Execution Order](#9-recommended-reading-and-execution-order)
+10. [Dependencies](#10-dependencies)
+11. [Known Issues and Reproducibility](#11-known-issues-and-reproducibility)
+12. [Third-party Code and Related Projects](#12-third-party-code-and-related-projects)
 
-Raw GNSS, IMU, CPT reference trajectories, and generated outputs are intentionally not stored in this repository.
+## 1. Research Objectives
 
+The project investigates how inertial propagation and GNSS corrections can be combined to maintain a navigation solution between GNSS epochs. Its main objectives are to:
+
+1. propagate an ECEF navigation solution at the IMU sampling rate;
+2. estimate GNSS position and velocity from pseudorange and Doppler observations;
+3. compare position/velocity-level fusion with observation-level fusion;
+4. estimate accelerometer and gyroscope biases through closed-loop filtering; and
+5. evaluate integrated trajectories against CPT reference position, velocity, and attitude data.
+
+The implementation uses reference information for initialization and some diagnostic calculations. It should therefore be understood as an experimental comparison framework, not an autonomous initialization system.
+
+## 2. Integration Methods and State Definitions
+
+| Method | GNSS information used in the update | Main driver | Update function |
+|---|---|---|---|
+| LCKF | ECEF receiver position and velocity from weighted least squares | `LCKF_INS_GNSS_GH.m` | `LC_KF_Epoch.m` |
+| TCKF | Per-satellite corrected pseudorange and Doppler-derived range rate, together with satellite position and velocity | `TCKF_INS_GNSS_GH.m` | `TC_KF_Epoch.m` |
+
+Both methods call `Nav_equations_ECEFdelete1.m` for inertial propagation. Their update functions propagate the error covariance, form measurement innovations, calculate the Kalman gain, and feed corrections back into attitude, velocity, position, and IMU biases.
+
+### Error-state ordering
+
+| Indices | Quantity | Units |
+|---|---|---|
+| 1–3 | Attitude error | rad |
+| 4–6 | ECEF velocity error | m/s |
+| 7–9 | ECEF position error | m |
+| 10–12 | Accelerometer bias error | m/s² |
+| 13–15 | Gyroscope bias error | rad/s |
+| 16 | Receiver clock offset, TCKF only | m |
+| 17 | Receiver clock drift, TCKF only | m/s |
+
+LCKF uses 15 states. The active transition and measurement matrices in TCKF use 17 states. Parts of the code attempt to introduce additional constellation clock states at indices 18–19, but this extension is inconsistent with the active 17-state update; see Section 11.
+
+## 3. Input Data and Coordinate Conventions
+
+### `open3s.mat`
+
+The bundled prepared experiment contains the following variables, verified by inspecting the MAT-file metadata:
+
+| Variable | Stored shape | Role |
+|---|---|---|
+| `CPT_data` | 131 × 12 double | Reference timing, geodetic position, NED velocity, and attitude |
+| `GNSS_data` | 131 × 15 cell | Epoch-wise GNSS observations and derived quantities |
+| `IMU_data` | 13,056 × 13 double | IMU timing, acceleration, angular rate, and orientation fields |
+
+These are stored dimensions before the main script trims the experiment. Raw ROS bags, receiver logs, navigation files, and separate reference trajectories are not bundled. The MAT-file itself contains experimental navigation data; it is not a synthetic fixture.
+
+### `CPT_data`
+
+| Columns | Interpretation in the code |
+|---|---|
+| 1 | Reference timestamp used for synchronization |
+| 2–3 | GPS week and GPS time-of-week in the loader's reference format |
+| 4–6 | Latitude and longitude in degrees; height in metres |
+| 7–9 | North, east, and down velocity in m/s |
+| 10–12 | Roll, pitch, and heading in degrees, converted to radians where used for initialization |
+
+The ROS loader can append reference inertial fields beyond column 12, but those extra columns are absent from the included example.
+
+### `GNSS_data`
+
+Each row represents one GNSS epoch. The following cells are relevant to the current processing chain:
+
+| Cell column | Contents |
+|---|---|
+| 1 | GPS time-of-week |
+| 2 | Receiver position ordered as longitude, latitude, height |
+| 3 | Observed PRN list |
+| 4–5 | Observed satellite elevation and azimuth |
+| 6–8 | Auxiliary satellite PRN/elevation/azimuth arrays referenced by preprocessing |
+| 9 | Per-satellite feature matrix; generated by the loader as PRN, satellite count, availability ratio, C/N0, elevation, normalized pseudorange residual, range-rate consistency, and range-rate proxy |
+| 10 | `[PRN, corrected pseudorange, satellite ECEF X, Y, Z]` |
+| 11 | `[Doppler, satellite ECEF VX, VY, VZ, wavelength]` |
+| 12 | Timestamp aligned with the IMU/reference clock |
+| 13 | Receiver ECEF velocity |
+| 14 | Optional reference-derived double-difference pseudorange errors |
+| 15 | Workflow-dependent intermediate matrix: the loader stores corrected pseudorange data here, while LCKF rebuilds it as a nine-column Doppler/geometry matrix |
+
+Rows of the feature, pseudorange, and Doppler matrices must refer to the same satellites in the same order. The integration drivers obtain the weights through columns 1–2 of cell 9; this does not match the loader's documented-by-assignment C/N0/elevation positions, and must be reconciled before running a new dataset.
+
+### `IMU_data`
+
+The integration functions read acceleration from columns 4–6 and angular rate from columns 7–9. They map these to the body frame as `[column 5, column 4, -column 6]` and `[column 8, column 7, -column 9]`. The main script also reads columns 10–13 with `quat2eul` for a diagnostic attitude conversion.
+
+Time handling is currently inconsistent: the main script and TCKF use column 1, while LCKF uses column 2. Both timestamps must be checked against GNSS cell 12 before comparison. Acceleration and angular rate supplied to mechanization must be in m/s² and rad/s respectively.
+
+Internal position and velocity propagation uses ECEF metres and m/s. Local velocity outputs use north-east-down (NED). Geodetic conversion functions use radians internally; the result arrays store latitude, longitude, and Euler angles in degrees.
+
+## 4. Experiment and Data Preparation
+
+### `LCKF_main_lite.m`
+
+Main entry point for both integration methods despite its LCKF-only filename. It loads `open3s.mat`, trims all streams using `Stime` and `Etime`, estimates a static IMU bias from the initial interval, compensates acceleration for gravity during that calibration, defines LC/TC filter parameters, aligns stream starts, calls both drivers, calculates trajectory errors, and plots all solutions over a map.
+
+The stored experiment settings are `Stime = 1`, `Etime = 103`, and `IMU_static_time = 30`. The script removes selected PRNs from auxiliary cells 6–8; it does not apply that same operation to the observation matrices in cells 10–11. Configuration values are embedded in the script rather than loaded from a separate configuration file.
+
+### `rosbag_loading_open.m`
+
+Historical preprocessing script for reference, GNSS, and IMU ROS topics. It reads broadcast navigation, computes satellite states and observation corrections through goGPS helpers, builds epoch-wise GNSS cells, downsamples GNSS to reference epochs, computes optional reference-station corrections, and saves `CPT_data`, `GNSS_data`, and `IMU_data` under `data/mat/`.
+
+The script is an unfinished preparation template: experiment path selections are commented out, several required variables are not initialized in the active code, and the active IMU-loading loop fills only the timestamp columns. It does not currently populate the complete 13-column IMU input required by the main experiment. Its final MAT filename is based on `file_name`; it does not automatically recreate `open3s.mat`.
+
+### `.gitignore`
+
+Excludes CSV/TXT observation exports, UBX/RINEX-like files, ROS bags, archives, MATLAB autosaves, and the `input/`, `output/`, `data/`, and `results/` directories. MAT-files are not globally ignored, which allows the prepared `open3s.mat` example to remain tracked.
+
+### `README.md`
+
+Project handover document describing the research purpose, input contracts, file responsibilities, reading order, dependencies, and current implementation limits.
+
+## 5. Integration and Kalman Filter Files
+
+### `LCKF_INS_GNSS_GH.m`
+
+Runs the loosely coupled IMU loop. It initializes position and velocity from GNSS weighted least squares and attitude from the CPT reference, corrects IMU measurements with estimated biases, propagates the ECEF solution, and applies a position/velocity update at available GNSS epochs. It returns the ten-column integrated trajectory and standalone GNSS latitude/longitude/height estimates.
+
+The function also calculates reference-derived velocity diagnostics and rebuilds GNSS cell 15 for Doppler processing. These intermediate modifications are local to the function.
+
+### `TCKF_INS_GNSS_GH.m`
+
+Runs the tightly coupled IMU loop. It initializes GNSS position and receiver clock quantities using unweighted least squares, initializes attitude from CPT, propagates the ECEF solution, and assembles each update matrix as `[pseudorange, range rate, satellite XYZ, satellite velocity XYZ, PRN]`. Range rate is calculated as negative Doppler multiplied by wavelength.
+
+It also computes standalone WLS positions for comparison. Reference-derived Doppler is calculated for diagnostics, but the assignments that would replace measured Doppler are commented out. The satellite-count gate is currently bypassed by `|| 1`.
+
+### `LC_KF_Epoch.m`
+
+One 15-state loosely coupled filter epoch. It builds the first-order error transition, propagates covariance with gyro/accelerometer and bias process noise, forms a six-component ECEF position/velocity innovation, and performs closed-loop correction. Measurement covariance uses the fixed `pos_meas_SD` and `vel_meas_SD` values from the configuration. The active attitude correction includes an additional factor of one-half relative to the corresponding TCKF correction.
+
+### `TC_KF_Epoch.m`
+
+One tightly coupled filter epoch. It predicts per-satellite range and range rate from the inertial solution, adds receiver clock terms, builds a `2 × number-of-satellites` innovation vector, and updates navigation, biases, and clock states. The active matrices are 17-dimensional. Range and range-rate measurement variances are fixed by `pseudo_range_SD` and `range_rate_SD`; this function does not apply classifier-derived weights.
+
+### `Initialize_LC_P_matrix.m`
+
+Creates the 15 × 15 diagonal initial covariance from attitude, velocity, position, accelerometer-bias, and gyro-bias standard deviations in `LC_KF_config`.
+
+### `Initialize_TC_P_matrix.m`
+
+Creates the initial navigation and clock covariance. Its default allocation is 17 × 17; setting `bds_tag = 1` writes indices up to 19 and expands the matrix. The main script currently enables this flag, which conflicts with the active 17-state propagation in `TC_KF_Epoch.m`.
+
+## 6. GNSS Position, Velocity, and Doppler Files
+
+### `WLS_positioning.m`
+
+Iterative weighted least-squares receiver positioning from `[PRN, pseudorange, satellite XYZ]`. It constructs observation weights using the supplied elevation and C/N0, estimates position and constellation-dependent clock terms, and returns position, residuals, horizontal/vertical DOP, and per-satellite clock estimates. Iteration stops when the position increment falls below 1 mm; no maximum iteration count is imposed.
+
+### `WLS_velocity.m`
+
+Weighted Doppler velocity solution. Its nine-column input is `[PRN, Doppler, satellite XYZ, satellite velocity XYZ, wavelength]`. It uses the same elevation/C/N0 weight model as WLS positioning and returns ECEF receiver velocity plus clock-rate terms.
+
+### `Least_square_positioning.m`
+
+Unweighted counterpart of the positioning solver, used for TCKF initialization and preprocessing diagnostics. It also estimates clock terms and returns residuals and DOP. Its insufficient-satellite branch does not assign the fourth output, so callers requesting clock estimates need to handle that case.
+
+### `Least_square_velocity.m`
+
+Unweighted Doppler velocity and clock-rate solver used during TCKF initialization. Its final velocity sign differs from `WLS_velocity.m`; the observation sign convention needs to be verified before interchanging the two functions.
+
+### `True_doppler_by_velocity.m`
+
+Diagnostic Doppler reconstruction using a supplied reference ECEF velocity, satellite geometry, wavelength, and estimated clock-rate terms. It is called by the TCKF driver to calculate a reference-based Doppler sequence; that sequence is not substituted into the active measurement update.
+
+## 7. Inertial Navigation and Coordinate Utilities
+
+| File | Responsibility |
+|---|---|
+| `Nav_equations_ECEFdelete1.m` | Propagates attitude using Earth rotation and body angular increments, transforms specific force to ECEF, integrates velocity with gravity and Coriolis terms, and integrates position using average velocity. Also returns the acceleration term for diagnostics. |
+| `Gravity_ECEF.m` | Computes ECEF gravity including the WGS84 gravitational parameter, J2 term, and centrifugal acceleration. |
+| `Skew_symmetric.m` | Converts a three-component vector into its cross-product matrix. |
+| `Euler_to_CTM.m` | Converts roll, pitch, and yaw in radians into a coordinate transformation matrix. Callers transpose it where a body-to-navigation matrix is needed. |
+| `CTM_to_Euler.m` | Extracts roll, pitch, and yaw in radians from a transformation matrix. |
+| `NED_to_ECEF.m` | Converts geodetic position, NED velocity, and body-to-NED attitude to ECEF position, velocity, and attitude. |
+| `NED_to_ECEFdebug.m` | Same conversion with the additional ECEF-to-NED transformation matrix returned for diagnostics. |
+| `ECEF_to_NED.m` | Converts ECEF position, velocity, and attitude to geodetic position and the local NED frame. |
+| `pv_ECEF_to_NED.m` | Position/velocity-only counterpart used during initialization. |
+| `plot_openstreetmap.m` | Downloads map tiles for the current longitude/latitude figure axes and draws a configurable map background. Requires network access for uncached tiles. |
+
+These coordinate utilities do not replace the separately called `llh2xyz`, `xyz2llh`, `xyz2enu`, and `enu2xyz` functions, which are absent from this repository.
+
+## 8. Outputs and Evaluation
+
+Both integration drivers return a trajectory with this layout:
+
+| Columns | Output |
+|---|---|
+| 1 | IMU-loop timestamp |
+| 2–4 | Latitude in degrees, longitude in degrees, height in metres |
+| 5–7 | North, east, down velocity in m/s |
+| 8–10 | Roll, pitch, yaw in degrees; negative yaw is shifted into the positive heading range |
+
+`GNSS_llh` contains epoch-wise standalone GNSS latitude, longitude, and height. Bias and covariance-standard-deviation histories are built inside the drivers but are not exposed in their return signatures.
+
+The main script creates `Error_2D` and `Error_3D` in the workspace, each ordered as `[reference time, GNSS error, LCKF error, TCKF error]`. Three-dimensional error is an ECEF position distance. The quantity called 2D error is calculated by replacing estimated height with reference height before taking that distance; it is not an explicit east/north projection.
+
+The script prints RMS summaries and plots reference, standalone GNSS, LCKF, and TCKF trajectories. Integrated estimates are matched to reference epochs by nearest timestamp, without a maximum time-gap check. It does not automatically export a result table or save the generated figures.
+
+No numerical navigation accuracy is claimed here: this documentation update inspected the source and MAT-file metadata but did not execute the MATLAB experiment.
+
+## 9. Recommended Reading and Execution Order
+
+1. Read `LCKF_main_lite.m` for experiment settings, stream trimming, calibration, and evaluation.
+2. Inspect the three variables in `open3s.mat` and compare them with Section 3.
+3. Read `LCKF_INS_GNSS_GH.m` alongside `WLS_positioning.m`, `WLS_velocity.m`, and `LC_KF_Epoch.m`.
+4. Read `TCKF_INS_GNSS_GH.m` alongside `TC_KF_Epoch.m` and `Initialize_TC_P_matrix.m`.
+5. Read `Nav_equations_ECEFdelete1.m` and the coordinate utilities to follow inertial propagation.
+6. Consult `rosbag_loading_open.m` only when preparing a new experiment, after completing its missing configuration and data extraction.
+
+For a local reproduction, add this repository and the required external GNSS helpers to the MATLAB path. Inspect the input before launching the main script:
+
+```matlab
+whos('-file', 'open3s.mat')
+which llh2xyz -all
+which xyz2llh -all
+which xyz2enu -all
+which enu2xyz -all
+```
+
+Resolve the clock-state dimensions, input-column conventions, and timing issues listed below, then run:
+
+```matlab
+LCKF_main_lite
+```
+
+The script begins with `clear`, so configuration changes must be made in the script or in a deliberate refactoring rather than entered only in the workspace.
+
+## 10. Dependencies
+
+- MATLAB for the experiment, matrix solvers, plotting, and MAT-file inputs. The original MATLAB release has not been established.
+- External GNSS coordinate helpers: `llh2xyz`, `xyz2llh`, `xyz2enu`, and `enu2xyz`.
+- An installation providing `quat2eul` for the main script's quaternion diagnostic, and `rms` for its printed evaluation.
+- ROS Toolbox or a compatible MATLAB installation providing `rosbag`, `select`, and `readMessages`, when using the ROS preprocessing script.
+- goGPS and related RINEX, satellite-state, atmospheric-correction, and least-squares helpers for preprocessing. They are not bundled in this repository.
+- `finv` support for the preprocessing script's statistics table, plus the separately referenced `DD_pr_error_from_Ref` helper and reference-station data if that branch is used.
+- Network access for the optional map-tile background.
+
+## 11. Known Issues and Reproducibility
+
+- **Clock-state dimensions:** the main script sets `bds_tag = 1`, causing covariance initialization to expand to 19 states, while the TC transition and observation matrices remain 17-state. Branches for non-GPS PRNs reference clock states 18–19 even though their propagation is commented out.
+- **Time columns:** LCKF reads IMU column 2, while TCKF and the main script use column 1. Equal meaning and alignment cannot be assumed for another dataset.
+- **GNSS weight columns:** the drivers pass feature-matrix column 2 as elevation and column 1 as C/N0. The ROS loader actually assigns satellite count and PRN to those columns. The prepared input and the loader require an explicit schema reconciliation.
+- **Satellite availability:** TCKF bypasses its calculated satellite-count requirement with `|| 1`, so insufficient or singular geometry can reach the solvers.
+- **Reference-assisted initialization:** both drivers use CPT attitude and reference position information; reference-derived velocity/Doppler calculations also remain in the experimental code.
+- **Constellation handling:** several solvers group every PRN greater than 32 into one category, while other routines distinguish multiple PRN ranges. Their clock models are not consistently implemented across initialization and filtering.
+- **Numerical and sign conventions:** solvers use explicit matrix inverses, positioning iterations have no hard limit, weighted and unweighted velocity signs differ, and the LC attitude correction contains an extra one-half factor. These choices need validation before quantitative conclusions.
+- **Preprocessing completeness:** experiment paths and variables remain unresolved in `rosbag_loading_open.m`; full IMU measurements are not extracted by its active loading loop.
+- **Evaluation:** nearest-time matching has no tolerance, the reported 2D distance uses a height substitution, and no independent execution log or validated result artifact is included.
+
+## 12. Third-party Code and Related Projects
+
+Several filter, mechanization, gravity, and coordinate functions retain Paul Groves' copyright notices and refer to the BSD license accompanying the software for *Principles of GNSS, Inertial, and Multisensor Integrated Navigation Systems*, Second Edition. Driver and loader headers also identify modifications by G. H. Zhang. Preserve those notices; a repository-level license and the referenced `license.txt` are not currently included.
+
+The related [GNSS Signal Classifier](https://github.com/biuqiaqia/GNSS-Signal-Classifier) project studies per-satellite signal conditions, and [GNSS Error Map](https://github.com/biuqiaqia/GNSS-Error-Map) studies spatial GNSS errors. This integration repository currently contains no active classifier inference call or error-map lookup in its filter updates. Any future connection must define observation labels, feature order, and measurement-noise mapping explicitly.
