@@ -1,6 +1,6 @@
 # Original Classifier Fusion Source
 
-These are unchanged archival copies. Add only the parent classifier folder and repository root when using the maintained interfaces.
+These six MATLAB files are the project's **Original Source Code**, recovered from the author's existing project folders and copied byte-for-byte without modification. This README is supplementary documentation written by Codex. The new interfaces in the parent classifier folder are **Supplementary Code** written by Codex, not recovered original research code. Add only the parent classifier folder and repository root when using those supplementary interfaces.
 
 | File | Source relative to the original workspace | Actual behavior and limitations |
 |---|---|---|
