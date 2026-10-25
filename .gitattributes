@@ -1,0 +1,3 @@
+# Preserve original archived source/data bytes and their recorded SHA-256.
+experiments/*/*.csv -text -whitespace
+classifier/archive/*.m -text -whitespace

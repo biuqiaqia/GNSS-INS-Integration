@@ -1,8 +1,8 @@
 # GNSS/INS Integration
 
-MATLAB research code for loosely coupled and tightly coupled GNSS/inertial navigation. Both workflows propagate position, velocity, and attitude in Earth-centred, Earth-fixed (ECEF) coordinates using IMU measurements, then apply closed-loop Kalman-filter corrections when GNSS observations become available. The main experiment compares standalone GNSS, loosely coupled integration (LCKF), and tightly coupled integration (TCKF) against a reference trajectory.
+MATLAB research code for loosely coupled and tightly coupled GNSS/inertial navigation, recovered classifier-fusion experiments, and a maintained class-conditioned filter interface. Six GNSS/IMU/reference experiment triplets accompany the original MAT example. The baseline propagates ECEF position, velocity, and attitude from IMU measurements, applies GNSS Kalman-filter corrections, and compares standalone GNSS, LCKF, and TCKF trajectories.
 
-> This repository preserves an experimental implementation rather than a self-contained navigation package. A prepared example, `open3s.mat`, is included. Additional GNSS coordinate utilities and preprocessing dependencies are required, and several implementation inconsistencies must be resolved before treating a run as a validated benchmark.
+> This repository preserves experimental implementations. The classifier interface and four input triplets passed MATLAB loading/numerical checks; full trajectory performance and online inference remain unvalidated. Additional GNSS utilities are needed by the historical drivers. See Sections 13–14 for the maintained interface, original source, and data readiness.
 
 ## Table of Contents
 
@@ -18,6 +18,8 @@ MATLAB research code for loosely coupled and tightly coupled GNSS/inertial navig
 10. [Dependencies](#10-dependencies)
 11. [Known Issues and Reproducibility](#11-known-issues-and-reproducibility)
 12. [Third-party Code and Related Projects](#12-third-party-code-and-related-projects)
+13. [Classifier-assisted Fusion](#13-classifier-assisted-fusion)
+14. [Curated Experimental Data](#14-curated-experimental-data)
 
 ## 1. Research Objectives
 
@@ -126,7 +128,7 @@ The script is an unfinished preparation template: experiment path selections are
 
 ### `.gitignore`
 
-Excludes CSV/TXT observation exports, UBX/RINEX-like files, ROS bags, archives, MATLAB autosaves, and the `input/`, `output/`, `data/`, and `results/` directories. MAT-files are not globally ignored, which allows the prepared `open3s.mat` example to remain tracked.
+Excludes observation exports, raw receiver files, ROS bags, archives, autosaves, and generated data directories. Explicit exceptions track the curated `experiments/*/GNSS.csv`, `IMU.csv`, and `CPT.csv` inputs. MAT-files are not globally ignored, so `open3s.mat` remains tracked.
 
 ### `README.md`
 
@@ -152,7 +154,7 @@ One 15-state loosely coupled filter epoch. It builds the first-order error trans
 
 ### `TC_KF_Epoch.m`
 
-One tightly coupled filter epoch. It predicts per-satellite range and range rate from the inertial solution, adds receiver clock terms, builds a `2 × number-of-satellites` innovation vector, and updates navigation, biases, and clock states. The active matrices are 17-dimensional. Range and range-rate measurement variances are fixed by `pseudo_range_SD` and `range_rate_SD`; this function does not apply classifier-derived weights.
+One tightly coupled filter epoch. It predicts per-satellite range and range rate, adds receiver clock terms, and updates navigation, biases, and clock states using 17-dimensional matrices. Variances default to `pseudo_range_SD` and `range_rate_SD`. Optional `observation_pseudorange_SD` and `observation_range_rate_SD` configuration vectors supply one positive standard deviation per satellite. The classifier adapter uses this interface; existing calls retain fixed-noise behavior.
 
 ### `Initialize_LC_P_matrix.m`
 
@@ -218,7 +220,7 @@ The main script creates `Error_2D` and `Error_3D` in the workspace, each ordered
 
 The script prints RMS summaries and plots reference, standalone GNSS, LCKF, and TCKF trajectories. Integrated estimates are matched to reference epochs by nearest timestamp, without a maximum time-gap check. It does not automatically export a result table or save the generated figures.
 
-No numerical navigation accuracy is claimed here: this documentation update inspected the source and MAT-file metadata but did not execute the MATLAB experiment.
+No numerical navigation accuracy is claimed here. The classifier addition passed MATLAB R2024b checks for real-data loading and synthetic one-epoch filter equivalence. Full historical trajectory comparisons and online model inference have not been validated.
 
 ## 9. Recommended Reading and Execution Order
 
@@ -273,4 +275,67 @@ The script begins with `clear`, so configuration changes must be made in the scr
 
 Several filter, mechanization, gravity, and coordinate functions retain Paul Groves' copyright notices and refer to the BSD license accompanying the software for *Principles of GNSS, Inertial, and Multisensor Integrated Navigation Systems*, Second Edition. Driver and loader headers also identify modifications by G. H. Zhang. Preserve those notices; a repository-level license and the referenced `license.txt` are not currently included.
 
-The related [GNSS Signal Classifier](https://github.com/biuqiaqia/GNSS-Signal-Classifier) project studies per-satellite signal conditions, and [GNSS Error Map](https://github.com/biuqiaqia/GNSS-Error-Map) studies spatial GNSS errors. This integration repository currently contains no active classifier inference call or error-map lookup in its filter updates. Any future connection must define observation labels, feature order, and measurement-noise mapping explicitly.
+The related [GNSS Signal Classifier](https://github.com/biuqiaqia/GNSS-Signal-Classifier) project studies per-satellite signal conditions. Recovered classifier work and its current integration interfaces are documented below. The later error-map integration is outside this repository update.
+
+## 13. Classifier-assisted Fusion
+
+The classifier-related work has two paths: historical fusion experiments reading `Type`/`Uncertainty` from CSV, and a MATLAB-to-Python inference prototype. Neither establishes that the bundled CSV labels were generated by the archived neural model. This addition preserves that distinction and provides a consistent class-conditioned filtering interface.
+
+### Maintained interfaces
+
+| File | Role |
+|---|---|
+| `classifier/load_classifier_experiment.m` | Reads a GNSS/IMU/CPT triplet, aligns GNSS time using an exact CPT GPS-time lookup, and reads IMU TimePoint. Defaults to requiring Predicted_Type. Explicitly selecting Type enables original-label replay with a warning. |
+| `classifier/build_classifier_measurements.m` | Constructs a canonical 13-column matrix: pseudorange, range rate, satellite XYZ, satellite velocity XYZ, PRN, selected label, stored uncertainty, C/N0, elevation. |
+| `classifier/TC_KF_Epoch_classifier.m` | Converts labels 0–3 into caller-supplied pseudorange/range-rate standard deviations and calls the existing TC filter. Supports GPS PRNs 1–32 with 17 states. |
+| `classifier/verify_classifier_interfaces.m` | Checks four real triplets, rejection of missing predictions and ambiguous reference times, equivalence to fixed-noise filtering, and the effect of class-dependent covariance. |
+
+These maintained interfaces were added during repository restoration. They are not recovered original source. No physical class meaning or class-noise calibration is imposed: classifier and dataset versions have different label definitions.
+
+### Restored original source
+
+`classifier/archive/` preserves six original files byte-for-byte. Its [README](classifier/archive/README.md) records provenance and actual code behavior. Do not add the archive recursively to the MATLAB path: the saved calls do not form a compatible standalone version.
+
+The original driver creates baseline/type/uncertainty trajectories and calls variant WLS/TC functions. In recovered copies, the class-noise lookup in TC_KF_Epoch_1 is commented out and observation columns differ between callers and callees. Its old WLS_positioning_1 dependency was later repurposed; that incompatible implementation is excluded. The archive therefore does not establish an AI-assisted navigation gain.
+
+### Reading an experiment
+
+From the repository root:
+
+```matlab
+addpath(pwd, fullfile(pwd, 'classifier'));
+[CPT_data, GNSS_data, IMU_data, info] = ...
+    load_classifier_experiment(fullfile('experiments', 'new'), 'Type');
+measurements = build_classifier_measurements(GNSS_data(1,:));
+```
+
+This selects original-label replay. The loader retains stored scores and does not relabel, clamp, crop, resample, or overwrite CSVs. Both returned IMU timing columns use TimePoint; GNSS timestamps come from CPT Time rather than an epoch counter. Sensor axes, velocity frames, static initialization, and evaluation intervals still need experiment-specific confirmation.
+
+For actual model-assisted replay, join model outputs as a Predicted_Type column by GPS time and PRN, retaining satellite order, and use the default loader call. Match the classifier's exact feature normalization and label schema. The archived inference prototype uses [Elevation, Azimuth, CNR], but its referenced predict_gnss.py module has not been recovered. Its pred_Uncertainty output merely duplicates the class ID.
+
+### Class-conditioned filter update
+
+Provide positive four-element configuration vectors `class_pseudorange_SD` (metres) and `class_range_rate_SD` (m/s), indexed by numeric label plus one. Initialize GPS covariance with bds_tag = 0 and call TC_KF_Epoch_classifier with the same state arguments as TC_KF_Epoch. The adapter reads labels from observation column 10 and forms diagonal variances as squared standard deviations. It does not use the stored uncertainty column as a probability or change the inertial propagation.
+
+Calibration must be established for the selected label schema; commented historical lookup values are not treated as validated settings. This is an epoch-level integration point, not a replacement for full experiment initialization and evaluation.
+
+```matlab
+verify_classifier_interfaces
+```
+
+The interface checks passed on MATLAB R2024b Update 6. No trajectory accuracy or end-to-end classifier performance is implied by these checks.
+
+## 14. Curated Experimental Data
+
+Six original triplets are included under experiments/. Their [data guide](experiments/README.md) describes each file, source, and readiness. The [metadata audit](experiments/audit.json) records SHA-256 hashes, label counts, uncertainty ranges, and timing issues.
+
+| Experiment | GNSS rows | GNSS epochs | IMU rows | CPT rows | Input status |
+|---|---:|---:|---:|---:|---|
+| aaa_test | 1,996 | 287 | 23,463 | 326 | Passes structural loading checks |
+| new | 1,187 | 181 | 14,300 | 211 | Passes structural loading checks |
+| data1 | 1,341 | 209 | 27,552 | 209 | Passes structural loading checks |
+| data3 | 671 | 119 | 27,552 | 250 | Missing CPT/IMU timestamps need repair |
+| data5 | 2,509 | 264 | 23,271 | 264 | Passes structural loading checks |
+| data6 | 2,465 | 273 | 25,015 | 2,465 | Missing CPT time/position and repeated GPS times |
+
+None contains Predicted_Type. Several uncertainty columns contain continuous or negative values of unconfirmed provenance. Structural readiness does not establish synchronization accuracy, prediction provenance, classifier accuracy, or trajectory performance.

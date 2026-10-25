@@ -1,0 +1,716 @@
+{
+  "note": "Structural checks only. No AI prediction provenance or navigation accuracy is established.",
+  "experiments": {
+    "aaa_test": {
+      "files": {
+        "GNSS": {
+          "source": "System_ongoing/input/AAAtest/GNSS_data.csv",
+          "sha256": "48c661a19f135d0da6d0f7185da721a03ab051d55523ca1596140493fafc13e5",
+          "rows": 1996,
+          "columns": [
+            "GPS_Time",
+            "PRN",
+            "Elevation",
+            "Azimuth",
+            "CNR",
+            "CNR_rate",
+            "Pr_Residual",
+            "WLS_Latitude",
+            "WLS_Longitude",
+            "WLS_Height",
+            "GT_Latitude",
+            "GT_Longitude",
+            "GT_Height",
+            "Doppler",
+            "SaVX",
+            "SaVY",
+            "SaVZ",
+            "lambda",
+            "corrected_Pr",
+            "SaX",
+            "SaY",
+            "SaZ",
+            "VRx",
+            "VRy",
+            "VRz",
+            "Diff_DelPr_PrRate",
+            "SecDeri_pr",
+            "Visibility",
+            "ReflDist",
+            "DiffDist",
+            "D_Coeff",
+            "Type",
+            "Uncertainty",
+            "los"
+          ],
+          "missing_cells": 0
+        },
+        "IMU": {
+          "source": "System_ongoing/input/AAAtest/IMU_data.csv",
+          "sha256": "e7307790071eac7002dc447d01fd98dc180a8d1f23fdccd392f5983fc0e6d319",
+          "rows": 23463,
+          "columns": [
+            "TimePoint",
+            "Clip",
+            "WeekSec",
+            "Acc_X",
+            "Acc_Y",
+            "Acc_Z",
+            "Gyr_X",
+            "Gyr_Y",
+            "Gyr_Z",
+            "Quat_q0",
+            "Quat_q1",
+            "Quat_q2",
+            "Quat_q3"
+          ],
+          "missing_cells": 0
+        },
+        "CPT": {
+          "source": "System_ongoing/input/AAAtest/CPT_data.csv",
+          "sha256": "595fb62a0af4c63cd655e7c4fc5ee0e8a2d0b383ae12b3146d1e5cb70395923f",
+          "rows": 326,
+          "columns": [
+            "Time",
+            "week",
+            "GPS_Time",
+            "Latitude",
+            "Longitude",
+            "Height",
+            "VRx",
+            "Vry",
+            "VRz",
+            "Roll",
+            "Pitch",
+            "Yaw"
+          ],
+          "missing_cells": 0
+        }
+      },
+      "gnss_epochs": 287,
+      "type_counts": {
+        "0": 570,
+        "1": 1426
+      },
+      "uncertainty": {
+        "min": 0.0,
+        "max": 2.0,
+        "unique_values": 2,
+        "negative_rows": 0
+      },
+      "has_predicted_type": false,
+      "duplicate_gnss_keys": 0,
+      "repeated_reference_times": 0,
+      "missing_reference_gps_times": 0,
+      "missing_imu_times": 0,
+      "missing_reference_times": 0,
+      "nonpositive_imu_time_steps": 0,
+      "unmatched_gnss_rows": 0,
+      "imu_time_range": [
+        1.0924,
+        265.3624
+      ],
+      "cpt_time_range": [
+        1.0,
+        326.0
+      ],
+      "input_readiness": "passes structural checks for explicit Type replay",
+      "issues": []
+    },
+    "new": {
+      "files": {
+        "GNSS": {
+          "source": "System_ongoing/input/NEW/GNSS_data.csv",
+          "sha256": "8e547377ec25d4b179679247cf77d804ab7e8ad406fa39c97d0631b0bd506bea",
+          "rows": 1187,
+          "columns": [
+            "GPS_Time",
+            "PRN",
+            "Elevation",
+            "Azimuth",
+            "CNR",
+            "CNR_rate",
+            "Pr_Residual",
+            "WLS_Latitude",
+            "WLS_Longitude",
+            "WLS_Height",
+            "GT_Latitude",
+            "GT_Longitude",
+            "GT_Height",
+            "Doppler",
+            "SaVX",
+            "SaVY",
+            "SaVZ",
+            "lambda",
+            "corrected_Pr",
+            "SaX",
+            "SaY",
+            "SaZ",
+            "VRx",
+            "VRy",
+            "VRz",
+            "Diff_DelPr_PrRate",
+            "SecDeri_pr",
+            "Visibility",
+            "ReflDist",
+            "DiffDist",
+            "D_Coeff",
+            "Type",
+            "Uncertainty",
+            "los"
+          ],
+          "missing_cells": 0
+        },
+        "IMU": {
+          "source": "System_ongoing/input/NEW/IMU_data.csv",
+          "sha256": "04c8cf6b6e943ce4ae274d74b642a2afb0f0aaecea3e608fbe08b198f810f4e1",
+          "rows": 14300,
+          "columns": [
+            "TimePoint",
+            "Clip",
+            "ClippingFlags",
+            "Acc_X",
+            "Acc_Y",
+            "Acc_Z",
+            "Gyr_X",
+            "Gyr_Y",
+            "Gyr_Z",
+            "Quat_q0",
+            "Quat_q1",
+            "Quat_q2",
+            "Quat_q3"
+          ],
+          "missing_cells": 0
+        },
+        "CPT": {
+          "source": "System_ongoing/input/NEW/CPT_data.csv",
+          "sha256": "b849a203417075ea5a6ea3954059c7fbd1f05582f7d7e66b1e371d1b34f17856",
+          "rows": 211,
+          "columns": [
+            "Time",
+            "Week",
+            "GPS_Time",
+            "Latitude",
+            "Longitude",
+            "Height",
+            "VRx",
+            "Vry",
+            "VRz",
+            "Roll",
+            "Pitch",
+            "Yaw"
+          ],
+          "missing_cells": 0
+        }
+      },
+      "gnss_epochs": 181,
+      "type_counts": {
+        "1": 529,
+        "2": 181,
+        "3": 477
+      },
+      "uncertainty": {
+        "min": 0.0,
+        "max": 2.0,
+        "unique_values": 3,
+        "negative_rows": 0
+      },
+      "has_predicted_type": false,
+      "duplicate_gnss_keys": 0,
+      "repeated_reference_times": 0,
+      "missing_reference_gps_times": 0,
+      "missing_imu_times": 0,
+      "missing_reference_times": 0,
+      "nonpositive_imu_time_steps": 0,
+      "unmatched_gnss_rows": 0,
+      "imu_time_range": [
+        1.8234,
+        162.8734
+      ],
+      "cpt_time_range": [
+        1.0,
+        211.0
+      ],
+      "input_readiness": "passes structural checks for explicit Type replay",
+      "issues": []
+    },
+    "data1": {
+      "files": {
+        "GNSS": {
+          "source": "AAAPNT/The Past/data1/GNSS_data1.csv",
+          "sha256": "5c7a67491f5e517befc74c89e2c786c5907a3eeca89cd4d81a0b217a2f12a4de",
+          "rows": 1341,
+          "columns": [
+            "GPS_Time",
+            "PRN",
+            "Elevation",
+            "Azimuth",
+            "CNR",
+            "CNR_rate",
+            "Pr_Residual",
+            "WLS_Latitude",
+            "WLS_Longitude",
+            "WLS_Height",
+            "GT_Latitude",
+            "GT_Longitude",
+            "GT_Height",
+            "Doppler",
+            "SaVX",
+            "SaVY",
+            "SaVZ",
+            "lambda",
+            "corrected_Pr",
+            "SaX",
+            "SaY",
+            "SaZ",
+            "VRx",
+            "VRy",
+            "VRz",
+            "Diff_DelPr_PrRate",
+            "SecDeri_pr",
+            "Visibility",
+            "ReflDist",
+            "DiffDist",
+            "D_Coeff",
+            "Type",
+            "Uncertainty",
+            "los"
+          ],
+          "missing_cells": 0
+        },
+        "IMU": {
+          "source": "AAAPNT/The Past/data1/IMU_data1.csv",
+          "sha256": "8e3f3c200ac55bd38ae09096f5156b04df5937f5df96cdef60b23dcbe28760c6",
+          "rows": 27552,
+          "columns": [
+            "PacketCounter",
+            "TimePoint",
+            "ClippingFlags",
+            "Acc_X",
+            "Acc_Y",
+            "Acc_Z",
+            "Gyr_X",
+            "Gyr_Y",
+            "Gyr_Z",
+            "Quat_q0",
+            "Quat_q1",
+            "Quat_q2",
+            "Quat_q3"
+          ],
+          "missing_cells": 0
+        },
+        "CPT": {
+          "source": "AAAPNT/The Past/data1/CPT_data1.csv",
+          "sha256": "cc7d3d9a60b590fc6698e30296f9be1b2b94baadf36a7d2f972455bfb1574e02",
+          "rows": 209,
+          "columns": [
+            "Time",
+            "Week",
+            "GPS_Time",
+            "Latitude",
+            "Longitude",
+            "Height",
+            "VRx",
+            "Vry",
+            "VRz",
+            "Roll",
+            "Pitch",
+            "Yaw"
+          ],
+          "missing_cells": 0
+        }
+      },
+      "gnss_epochs": 209,
+      "type_counts": {
+        "0": 228,
+        "1": 31,
+        "2": 608,
+        "3": 474
+      },
+      "uncertainty": {
+        "min": -0.099995885,
+        "max": 0.881540723,
+        "unique_values": 1340,
+        "negative_rows": 505
+      },
+      "has_predicted_type": false,
+      "duplicate_gnss_keys": 0,
+      "repeated_reference_times": 0,
+      "missing_reference_gps_times": 0,
+      "missing_imu_times": 0,
+      "missing_reference_times": 0,
+      "nonpositive_imu_time_steps": 0,
+      "unmatched_gnss_rows": 0,
+      "imu_time_range": [
+        1.1644,
+        311.5044
+      ],
+      "cpt_time_range": [
+        1.0,
+        209.0
+      ],
+      "input_readiness": "passes structural checks for explicit Type replay",
+      "issues": []
+    },
+    "data3": {
+      "files": {
+        "GNSS": {
+          "source": "AAAPNT/The Past/data3/GNSS_data3.csv",
+          "sha256": "f84b0b24ead23681c9cf1cc75ba8dc7dfa02569a61e5cc0b18d87674240329f9",
+          "rows": 671,
+          "columns": [
+            "GPS_Time",
+            "PRN",
+            "Elevation",
+            "Azimuth",
+            "CNR",
+            "CNR_rate",
+            "Pr_Residual",
+            "WLS_Latitude",
+            "WLS_Longitude",
+            "WLS_Height",
+            "GT_Latitude",
+            "GT_Longitude",
+            "GT_Height",
+            "Doppler",
+            "SaVX",
+            "SaVY",
+            "SaVZ",
+            "lambda",
+            "corrected_Pr",
+            "SaX",
+            "SaY",
+            "SaZ",
+            "VRx",
+            "VRy",
+            "VRz",
+            "Diff_DelPr_PrRate",
+            "SecDeri_pr",
+            "Visibility",
+            "ReflDist",
+            "DiffDist",
+            "D_Coeff",
+            "Type",
+            "Uncertainty",
+            "los"
+          ],
+          "missing_cells": 149
+        },
+        "IMU": {
+          "source": "AAAPNT/The Past/data3/IMU_data3.csv",
+          "sha256": "275d47998be5cb9ae45b5e94ae81c1e00c8a792bdcddb6d0636a340e0b8cf12d",
+          "rows": 27552,
+          "columns": [
+            "PacketCounter",
+            "TimePoint",
+            "ClippingFlags",
+            "Acc_X",
+            "Acc_Y",
+            "Acc_Z",
+            "Gyr_X",
+            "Gyr_Y",
+            "Gyr_Z",
+            "Quat_q0",
+            "Quat_q1",
+            "Quat_q2",
+            "Quat_q3"
+          ],
+          "missing_cells": 38844
+        },
+        "CPT": {
+          "source": "AAAPNT/The Past/data3/CPT_data.csv",
+          "sha256": "48dfcc56b9e82eab10cfbbb96543aa499fb7939fe5253e844c541ceeb023353b",
+          "rows": 250,
+          "columns": [
+            "Time",
+            "Week",
+            "GPS_Time",
+            "Latitude",
+            "Longitude",
+            "Height",
+            "VRx",
+            "Vry",
+            "VRz",
+            "Roll",
+            "Pitch",
+            "Yaw"
+          ],
+          "missing_cells": 131
+        }
+      },
+      "gnss_epochs": 119,
+      "type_counts": {
+        "0": 211,
+        "1": 216,
+        "2": 94,
+        "3": 150
+      },
+      "uncertainty": {
+        "min": -0.0899948540677057,
+        "max": 0.834860206636937,
+        "unique_values": 612,
+        "negative_rows": 310
+      },
+      "has_predicted_type": false,
+      "duplicate_gnss_keys": 0,
+      "repeated_reference_times": 0,
+      "missing_reference_gps_times": 131,
+      "missing_imu_times": 3237,
+      "missing_reference_times": 0,
+      "nonpositive_imu_time_steps": 0,
+      "unmatched_gnss_rows": 0,
+      "imu_time_range": [
+        1.5684,
+        275.3984
+      ],
+      "cpt_time_range": [
+        1.0,
+        250.0
+      ],
+      "input_readiness": "needs repair before strict loading",
+      "issues": [
+        "Missing CPT Time/GPS_Time or IMU TimePoint values"
+      ]
+    },
+    "data5": {
+      "files": {
+        "GNSS": {
+          "source": "AAAPNT/The Past/data5/GNSS_data5.csv",
+          "sha256": "23e6dee4ceb31d9f13b2de80de6ef8a1ce334350c862b37a89c2043b15980928",
+          "rows": 2509,
+          "columns": [
+            "GPS_Time",
+            "PRN",
+            "Elevation",
+            "Azimuth",
+            "CNR",
+            "CNR_rate",
+            "Pr_Residual",
+            "WLS_Latitude",
+            "WLS_Longitude",
+            "WLS_Height",
+            "GT_Latitude",
+            "GT_Longitude",
+            "GT_Height",
+            "Doppler",
+            "SaVX",
+            "SaVY",
+            "SaVZ",
+            "lambda",
+            "corrected_Pr",
+            "SaX",
+            "SaY",
+            "SaZ",
+            "VRx",
+            "VRy",
+            "VRz",
+            "Diff_DelPr_PrRate",
+            "SecDeri_pr",
+            "Visibility",
+            "ReflDist",
+            "DiffDist",
+            "D_Coeff",
+            "Type",
+            "Uncertainty",
+            "los"
+          ],
+          "missing_cells": 0
+        },
+        "IMU": {
+          "source": "AAAPNT/The Past/data5/IMU_data5.csv",
+          "sha256": "432c66b309cd209947dd1ea45b4d49bb5c32a0eda0bfd7964946f99a096bd2cd",
+          "rows": 23271,
+          "columns": [
+            "PacketCounter",
+            "TimePoint",
+            "ClippingFlags",
+            "Acc_X",
+            "Acc_Y",
+            "Acc_Z",
+            "Gyr_X",
+            "Gyr_Y",
+            "Gyr_Z",
+            "Quat_q0",
+            "Quat_q1",
+            "Quat_q2",
+            "Quat_q3"
+          ],
+          "missing_cells": 0
+        },
+        "CPT": {
+          "source": "AAAPNT/The Past/data5/CPT_data5.csv",
+          "sha256": "b64eeea9f8fe6a0e0d5642a36fb0f4db1d38d9bc380e6693320f0ede794c7904",
+          "rows": 264,
+          "columns": [
+            "Time",
+            "Week",
+            "GPS_Time",
+            "Latitude",
+            "Longitude",
+            "Height",
+            "VRx",
+            "Vry",
+            "VRz",
+            "Roll",
+            "Pitch",
+            "Yaw"
+          ],
+          "missing_cells": 169
+        }
+      },
+      "gnss_epochs": 264,
+      "type_counts": {
+        "0": 17,
+        "1": 497,
+        "2": 1534,
+        "3": 461
+      },
+      "uncertainty": {
+        "min": -0.0789350936931811,
+        "max": 0.883594598705617,
+        "unique_values": 2416,
+        "negative_rows": 660
+      },
+      "has_predicted_type": false,
+      "duplicate_gnss_keys": 0,
+      "repeated_reference_times": 0,
+      "missing_reference_gps_times": 0,
+      "missing_imu_times": 0,
+      "missing_reference_times": 0,
+      "nonpositive_imu_time_steps": 0,
+      "unmatched_gnss_rows": 0,
+      "imu_time_range": [
+        1.0874,
+        263.1674
+      ],
+      "cpt_time_range": [
+        1.0,
+        264.0
+      ],
+      "input_readiness": "passes structural checks for explicit Type replay",
+      "issues": []
+    },
+    "data6": {
+      "files": {
+        "GNSS": {
+          "source": "AAAPNT/The Past/TCKF/GNSS_data6.csv",
+          "sha256": "69603dbf48a1b01bfcb8431d9ec9dcecd990d915a7de085f8dafdc8e97301f2c",
+          "rows": 2465,
+          "columns": [
+            "GPS_Time",
+            "PRN",
+            "Elevation",
+            "Azimuth",
+            "CNR",
+            "CNR_rate",
+            "Pr_Residual",
+            "WLS_Latitude",
+            "WLS_Longitude",
+            "WLS_Height",
+            "GT_Latitude",
+            "GT_Longitude",
+            "GT_Height",
+            "Doppler",
+            "SaVX",
+            "SaVY",
+            "SaVZ",
+            "lambda",
+            "corrected_Pr",
+            "SaX",
+            "SaY",
+            "SaZ",
+            "VRx",
+            "VRy",
+            "VRz",
+            "Diff_DelPr_PrRate",
+            "SecDeri_pr",
+            "Visibility",
+            "ReflDist",
+            "DiffDist",
+            "D_Coeff",
+            "Type",
+            "Uncertainty",
+            "los"
+          ],
+          "missing_cells": 11
+        },
+        "IMU": {
+          "source": "AAAPNT/The Past/TCKF/IMU_data6.csv",
+          "sha256": "b412795e894c08dba84e14159433d62b527bb91c04806d0cb2fb49f5d807d585",
+          "rows": 25015,
+          "columns": [
+            "PacketCounter",
+            "TimePoint",
+            "ClippingFlags",
+            "Acc_X",
+            "Acc_Y",
+            "Acc_Z",
+            "Gyr_X",
+            "Gyr_Y",
+            "Gyr_Z",
+            "Quat_q0",
+            "Quat_q1",
+            "Quat_q2",
+            "Quat_q3"
+          ],
+          "missing_cells": 0
+        },
+        "CPT": {
+          "source": "AAAPNT/The Past/TCKF/CPT_data6.csv",
+          "sha256": "bbe6ddfe771551c110a0d4326b33dd0ffa61a360c60fcdcd12f304b339be2ee0",
+          "rows": 2465,
+          "columns": [
+            "Time",
+            "Week",
+            "GPS_Time",
+            "Latitude",
+            "Longitude",
+            "Height",
+            "VRx",
+            "Vry",
+            "VRz",
+            "Roll",
+            "Pitch",
+            "Yaw"
+          ],
+          "missing_cells": 24504
+        }
+      },
+      "gnss_epochs": 273,
+      "type_counts": {
+        "0": 584,
+        "1": 1499,
+        "2": 104,
+        "3": 278
+      },
+      "uncertainty": {
+        "min": -0.0291636466271178,
+        "max": 0.839473569801027,
+        "unique_values": 2465,
+        "negative_rows": 1074
+      },
+      "has_predicted_type": false,
+      "duplicate_gnss_keys": 0,
+      "repeated_reference_times": 2192,
+      "missing_reference_gps_times": 0,
+      "missing_imu_times": 0,
+      "missing_reference_times": 2192,
+      "nonpositive_imu_time_steps": 0,
+      "unmatched_gnss_rows": 0,
+      "imu_time_range": [
+        1.5974,
+        283.3074
+      ],
+      "cpt_time_range": [
+        1.0,
+        273.0
+      ],
+      "input_readiness": "needs repair before strict loading",
+      "issues": [
+        "Repeated CPT GPS_Time makes exact reference-time lookup ambiguous",
+        "Missing CPT Time/GPS_Time or IMU TimePoint values",
+        "Missing reference positions"
+      ]
+    }
+  }
+}

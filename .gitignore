@@ -13,3 +13,10 @@ output/
 data/
 results/
 
+# Curated experiment inputs; keep all other CSV exports ignored.
+!experiments/*/GNSS.csv
+!experiments/*/IMU.csv
+!experiments/*/CPT.csv
+__pycache__/
+*.pyc
+

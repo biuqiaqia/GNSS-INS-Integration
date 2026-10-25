@@ -213,6 +213,19 @@ R_matrix((no_meas + 1):(2 * no_meas),1:no_meas) =...
 R_matrix((no_meas + 1):(2 * no_meas),(no_meas + 1):(2 * no_meas)) =...
     eye(no_meas) * TC_KF_config.range_rate_SD^2;
 
+% Optional per-observation standard deviations supplied by the classifier
+% adapter. The original fixed-noise behavior remains the default.
+if isfield(TC_KF_config, 'observation_pseudorange_SD')
+    sigma = TC_KF_config.observation_pseudorange_SD(:);
+    validateattributes(sigma, {'numeric'}, {'numel', no_meas, 'finite', 'positive'});
+    R_matrix(1:no_meas,1:no_meas) = diag(sigma.^2);
+end
+if isfield(TC_KF_config, 'observation_range_rate_SD')
+    sigma = TC_KF_config.observation_range_rate_SD(:);
+    validateattributes(sigma, {'numeric'}, {'numel', no_meas, 'finite', 'positive'});
+    R_matrix(no_meas+1:end,no_meas+1:end) = diag(sigma.^2);
+end
+
 % 7. Calculate Kalman gain using (3.21)
 K_matrix = P_matrix_propagated * H_matrix' * inv(H_matrix *...
     P_matrix_propagated * H_matrix' + R_matrix);
