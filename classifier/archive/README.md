@@ -3,7 +3,7 @@
 These six MATLAB files are the project's **Original Source Code**, recovered from the author's existing project folders and copied byte-for-byte without modification. This README is supplementary documentation written by Codex. The new interfaces in the parent classifier folder are **Supplementary Code** written by Codex, not recovered original research code. Add only the parent classifier folder and repository root when using those supplementary interfaces.
 
 | File |  Actual behavior and limitations |
-|---|---|---|
+|---|---|
 | KF_main_lite_1.m | Reads CSVs, creates C/N0/elevation features and Type/Uncertainty cells, calls LCKF and the parallel TC driver, and compares trajectories. Embedded paths and timing assumptions remain. |
 | TCKF_INS_GNSS_GH_1.m | Propagates baseline, type, and uncertainty histories. Constructs a 13-column observation matrix. Its original compatible classifier-only WLS_positioning_1 dependency was not recovered. |
 | TC_KF_Epoch_1.m | Uses a 19-state clock model, but class-noise lookups are commented out. Reads columns 11/12 as C/N0/elevation, unlike the driver. GPS-only observation matrices may remain 17-column, conflicting with the covariance. |
